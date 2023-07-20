@@ -31,17 +31,24 @@ export default function App() {
   const notificationListener = useRef();
   const responseListener = useRef();
 
-  const onChangeTime = (e) => {
-    // setTime({...time, [e.target.name]: e.target.value})
-    // let HH=parseInt(time.HH);let MM=parseInt(time.MM);let
-    // SS=parseInt(time.SS)+1;if((SS>=60)){SS-=
-    //   60;}else if(((MM+Math.floor(SS/60))%6
-    //   ===0)&&(MM!==9||!isNaN(HH))){{{
-    //     //console.log('here');
-    //     console.clear();}} else{setTime({...time,'SS':String(SS)})};
-    //     };
-    //     setInterval(()=>{setTimeout(()=>{},2)},1e3*parseFloat(`${time?.HH
-  };
+  const runTimer = ()=> {
+    if(!isStart || (secund==0 && minute==0 && hour==0)) {
+      stop()
+      return;
+    }
+    if(secund!=0){
+      setSecund(secund-1);
+    }else{
+      if (minute!=0) {
+        setSecund(59)
+        setMinute(minute-1)
+      }else{
+        setSecund(59)
+        setMinute(59)
+        setHour(hour-1)
+      }
+    }
+  }
   const setValues = (name, sign) => {
     if (name == "h") {
       if (hour + sign > -1) setHour(hour + sign);
@@ -61,6 +68,7 @@ export default function App() {
     setHour(0);
     setMinute(0);
     setSecund(0);
+    stop()
   };
   const start = () => {
     setIsStart(true);
@@ -70,11 +78,11 @@ export default function App() {
     await schedulePushNotification();
   };
   useEffect(() => {
-    let timer = setTimeout(() => {
-      if (isStart) {
-        stop();
-      }
-    }, Number(secund) * 1000);
+    if(isStart)
+      setInterval(() => {
+          runTimer()
+      }, 1000);
+
     registerForPushNotificationsAsync().then((token) =>
       setExpoPushToken(token)
     );
@@ -92,16 +100,14 @@ export default function App() {
         notificationListener.current
       );
       Notifications.removeNotificationSubscription(responseListener.current);
-      clearTimeout(timer);
     };
-  }, []);
+  }, [runTimer]);
 
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
     }),
   });
-  const notifHandler = () => {};
   return (
     <SafeAreaView style={styles.container}>
       <Text style={[styles.text, { fontSize: 40 }]}>Timer</Text>
